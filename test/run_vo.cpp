@@ -2,6 +2,7 @@
 #include"lmars/config.h"
 #include<opencv2/highgui/highgui.hpp>
 #include<opencv2/viz.hpp>
+#include<boost/timer.hpp>
 int main(int argc,char ** argv)
 {
     if(argc!=2){
@@ -42,5 +43,41 @@ int main(int argc,char ** argv)
     camera_coor.setRenderingProperty(cv::viz::LINE_WIDTH,1.0);
     vis.showWidget("world",world_coor);
     vis.showWidget("camera",camera_coor);
+    cout<<"read total "<<rgb_files.size()<<" entries"<<endl;
+    for(int i=0;i<rgb_files.size();i++){
+      Mat color=cv::imread(rgb_files[i]);
+      Mat depth=cv::imread(depth_files[i],-1);
+      if(color.data==nullptr||depth.data==nullptr){
+	break;
+      }
+      lmars::Frame::Ptr pFrame=lmars::Frame::createFrame();
+      pFrame->camera_=camera;
+      pFrame->color_=color;
+      pFrame->depth_=depth;
+      pFrame->time_stamp_=rgb_times[i];
+      
+      boost::timer timer;
+      vo->addFrame(pFrame);
+      cout<<"VO costs time:"<<timer.elapsed()<<endl;
+      if(vo->state_==lmars::VisualOdometry::LOST){
+	break;
+      }
+      SE3 Tcw=pFrame->T_c_w_.inverse();
+      cv::Affine3d M(
+	cv::Affine3d::Mat3(
+	  Tcw.rotation_matrix()(0,0), Tcw.rotation_matrix()(0,1), Tcw.rotation_matrix()(0,2),
+	  Tcw.rotation_matrix()(1,0), Tcw.rotation_matrix()(1,1), Tcw.rotation_matrix()(1,2),
+	  Tcw.rotation_matrix()(2,0), Tcw.rotation_matrix()(2,1), Tcw.rotation_matrix()(2,2)
+	),
+	cv::Affine3d::Vec3(
+	  Tcw.rotation_matrix()(0,0),Tcw.rotation_matrix()(1,0),Tcw.rotation_matrix()(2,0)
+	)
+      );
+      cv::imshow("image",color);
+      cv::waitKey(1);
+      vis.setWidgetPose("camera",M);
+      vis.spinOnce(1,false);
+    }
+    return 0;
     
 }
