@@ -42,7 +42,7 @@ namespace lmars{
   public:
     VisualOdometry();
     ~VisualOdometry();
-    bool addFrame(Frame::ptr frame);
+    bool addFrame(Frame::Ptr frame);
     
   protected:
     void extractKeyPoints();

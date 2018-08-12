@@ -13,7 +13,7 @@ MapPoint::MapPoint(long int id, Vector3d position, Vector3d norm)
 MapPoint::Ptr MapPoint::createMapPoint()
 {
   static long factory_id=0;
-  return MapPoint::Ptr(new MapPoint(factory_id,Vector3d(0,0,0),Vector3d(0,0,0));
+  return MapPoint::Ptr(new MapPoint(factory_id,Vector3d(0,0,0),Vector3d(0,0,0)));
 }
 
 }

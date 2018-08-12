@@ -20,7 +20,7 @@ VisualOdometry::~VisualOdometry()
 {
 
 }
-bool VisualOdometry::addFrame(Frame::ptr frame)
+bool VisualOdometry::addFrame(Frame::Ptr frame)
 {
   switch(state_){
     case INITIALIZING:
@@ -82,11 +82,13 @@ void VisualOdometry::featureMatching()
   vector<cv::DMatch> matches;
   cv::BFMatcher matcher(cv::NORM_HAMMING);
   matcher.match(descriptors_ref_,descriptors_curr_,matches);
-  float min_dis=min_element(matches.begin(),matches.end(),
-			    [](const cv::DMatch m1,const cv::DMatch m2){
-			      return m1.distance<m2.distance;
-			    }
-			   ).distance;
+  float min_dis=std::min_element(
+    matches.begin(),matches.end(),
+    [](const cv::DMatch& m1,const cv::DMatch& m2)
+    {
+      return m1.distance<m2.distance;
+    }
+    )->distance;
 
   feature_matches_.clear();
   for(cv::DMatch match:matches){
@@ -105,7 +107,7 @@ void VisualOdometry::setRef3DPoints()
     double d=ref_->findDepth(Keypoints_curr_[i]);
     if(d>0){
       Vector3d p_cam=ref_->camera_->pixel2camera(Vector2d(Keypoints_curr_[i].pt.x,Keypoints_curr_[i].pt.y),d);
-      pts_3d_ref_.push_back(cv::Point3f(p_cam(0,0),p_cam(1,0),p_cam(2,0));
+      pts_3d_ref_.push_back(cv::Point3f(p_cam(0,0),p_cam(1,0),p_cam(2,0)));
       descriptors_ref_.push_back(descriptors_curr_.row(i));
     }
   }

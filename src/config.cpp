@@ -1,4 +1,5 @@
 #include "lmars/config.h"
+#include<opencv2/core/persistence.hpp>
 namespace lmars{
 void Config::setParameterFile(const string& fileName)
 {
@@ -19,5 +20,4 @@ Config::~Config()
 
 
 shared_ptr<Config> Config::config_=nullptr;
-  
 }

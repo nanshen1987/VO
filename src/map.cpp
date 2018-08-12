@@ -15,7 +15,7 @@ void Map::insertMapPoint(MapPoint::Ptr mapPoint)
 {
   if(map_points_.find(mapPoint->id_)==map_points_.end())
   {
-    map_points_.insert(make_pair(mapPoint->id_,mapPoint);
+    map_points_.insert(make_pair(mapPoint->id_,mapPoint));
   }else{
     map_points_[mapPoint->id_]=mapPoint;
   }
