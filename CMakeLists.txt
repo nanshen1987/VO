@@ -1,7 +1,9 @@
 cmake_minimum_required( VERSION 2.8 )
 project( VO )
-
+# Release mode
 set( CMAKE_BUILD_TYPE Release)
+# Debug mode 
+# SET(CMAKE_BUILD_TYPE "Debug")
 set( CMAKE_CXX_FLAGS "-std=c++11 -O3" )
 
 list( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules )

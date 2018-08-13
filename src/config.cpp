@@ -5,6 +5,7 @@ void Config::setParameterFile(const string& fileName)
 {
   if(config_==nullptr)
     config_=shared_ptr<Config>(new Config);
+  cout<<fileName<<endl;
   config_->file_=cv::FileStorage(fileName.c_str(),cv::FileStorage::READ);
   if(config_->file_.isOpened()==false){
     cerr<<"param file "<<fileName<<" does not exist."<<endl;

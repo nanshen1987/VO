@@ -76,7 +76,7 @@ int main(int argc,char ** argv)
 	)
       );
       cv::imshow("image",color);
-      cv::waitKey(3000);
+      cv::waitKey(1);
       vis.setWidgetPose("camera",M);
       vis.spinOnce(1,false);
     }

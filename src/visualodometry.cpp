@@ -91,7 +91,7 @@ void VisualOdometry::featureMatching()
     )->distance;
 
   feature_matches_.clear();
-  for(cv::DMatch match:matches){
+  for(cv::DMatch& match:matches){
     if(match.distance<std::max<float>(min_dis*match_ratio_,30.0)){
 	feature_matches_.push_back(match);
     }
@@ -118,8 +118,8 @@ void VisualOdometry::poseEstimationPnp()
   vector<cv::Point3f> pts3d;
   vector<cv::Point2f> pts2d;
   for(cv::DMatch m:feature_matches_){
-    pts3d.push_back(pts_3d_ref_[m.queryIdx]);
     pts2d.push_back(Keypoints_curr_[m.trainIdx].pt);
+    pts3d.push_back(pts_3d_ref_[m.queryIdx]);
   }
   Mat K=(cv::Mat_<double>(3,3)<<
     ref_->camera_->fx_,0,ref_->camera_->cx_,
