@@ -22,9 +22,17 @@ include_directories( "/usr/include/eigen3/" )
 find_package(Sophus REQUIRED)
 include_directories(${Sophus_INCLUDE_DIRS})
 
+find_package( G2O REQUIRED )
+include_directories( 
+    ${G2O_INCLUDE_DIRS}
+)
+
+
 set( THIRD_PARTY_LIBS 
     ${OpenCV_LIBS}
     ${Sophus_LIBRARIES}
+     g2o_core 
+     g2o_stuff
 )
 
 include_directories(${PROJECT_SOURCE_DIR}/include )
