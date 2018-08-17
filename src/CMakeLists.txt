@@ -5,6 +5,7 @@ add_library( VO SHARED
     camera.cpp
     config.cpp
     visualodometry.cpp
+    g2o_types.cpp
 )
 
 target_link_libraries( VO

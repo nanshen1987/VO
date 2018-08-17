@@ -1,6 +1,7 @@
 #ifndef COMMON_INCLUDE
 #define COMMON_INCLUDE
 #include<Eigen/Core>
+#include<Eigen/Dense>
 #include<Eigen/Geometry>
 using Eigen::Vector2d;
 using Eigen::Vector3d;

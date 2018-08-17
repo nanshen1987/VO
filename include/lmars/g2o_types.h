@@ -1,6 +1,7 @@
 #ifndef G2O_TYPES_H
 #define G2O_TYPES_H
 #include "lmars/common_include.h"
+#include "lmars/camera.h"
 #include <g2o/core/base_unary_edge.h>
 #include <g2o/types/sba/types_six_dof_expmap.h>
 

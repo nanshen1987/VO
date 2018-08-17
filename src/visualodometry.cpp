@@ -1,6 +1,12 @@
 #include "lmars/visualodometry.h"
+#include "lmars/g2o_types.h"
 #include"lmars/config.h"
 #include<opencv2/calib3d/calib3d.hpp>
+#include<g2o/core/block_solver.h>
+#include<g2o/core/linear_solver.h>
+#include<g2o/solvers/dense/linear_solver_dense.h>
+#include<g2o/types/slam3d/se3_ops.h>
+#include<g2o/core/optimization_algorithm_levenberg.h>
 namespace lmars {
 VisualOdometry::VisualOdometry()
 :state_(INITIALIZING),ref_(nullptr),curr_(nullptr),map_(new Map),num_lost_(0),num_inliners_(0)
@@ -137,9 +143,9 @@ void VisualOdometry::poseEstimationPnp()
   );
   // using bundle adjustment to optimize the pose 
   typedef g2o::BlockSolver<g2o::BlockSolverTraits<6,2>> Block;
-  Block::LinearSolverType* linearSolver=new g2o::LinearSolverDense<Block::PoseMatrixType>();
-  Block* solver_ptr=new Block(linearSolver);
-  g2o::OptimizationAlgorithmLevenberg* solver=new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
+  std::unique_ptr<Block::LinearSolverType> linearSolver(new g2o::LinearSolverDense<Block::PoseMatrixType>());
+  std::unique_ptr<Block> solver_ptr(new Block(std::move(linearSolver)));
+  g2o::OptimizationAlgorithmLevenberg* solver=new g2o::OptimizationAlgorithmLevenberg(std::move(solver_ptr));
   g2o::SparseOptimizer optimizer;
   optimizer.setAlgorithm(solver);
   
@@ -159,7 +165,7 @@ void VisualOdometry::poseEstimationPnp()
 	  edge->camera_=curr_->camera_.get();
 	  edge->point_=Vector3d(pts3d[index].x,pts3d[index].y,pts3d[index].z);
 	  edge->setMeasurement(Vector2d(pts2d[index].x,pts2d[index].y));
-	  edge->setInformation(Eigen::Matrix2d::Identity);
+	  edge->setInformation(Eigen::Matrix2d::Identity());
 	  optimizer.addEdge(edge);
   }
   optimizer.initializeOptimization();
