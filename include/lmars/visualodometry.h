@@ -49,6 +49,7 @@ namespace lmars{
     void computeDescriptors();
     void featureMatching();
     void poseEstimationPnp();
+	void optimizeMap();
     void setRef3DPoints();
     void addKeyFrame();
     bool checkEstimatedPose();

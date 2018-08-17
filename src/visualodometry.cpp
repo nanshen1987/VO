@@ -136,6 +136,36 @@ void VisualOdometry::poseEstimationPnp()
       Vector3d(tvec.at<double>(0,0),tvec.at<double>(1,0),tvec.at<double>(2,0))
   );
 }
+
+void VisualOdometry::optimizeMap()
+{
+	for(auto iter=map_->map_points_.begin();iter!=map_->map_points_.end();)
+	{
+		if(!curr_->isInFrame(iter->second->pos_)
+		{
+			iter=map_->map_points_.erase(iter);
+			continue;
+		}
+		
+		float match_ratio=float(iter->second->match_times)/iter->second->visible_times_;
+		if(match_ratio<map_point_erase_ratio_)
+		{
+			iter=map_->map_points_.erase(iter);
+			continue;
+		}
+		double angle=getViewAngle(curr_,iter->second);
+		if(angle> M_PI/6.)
+		{
+			iter=map_->map_points_.erase(iter);
+			continue;
+		}
+		if ( iter->second->good_ == false )
+        {
+            // TODO try triangulate this map point 
+        }
+        iter++;
+	}
+}
 bool VisualOdometry::checkEstimatedPose()
 {
   if(num_inliners_<min_inliers_){
@@ -162,8 +192,26 @@ bool VisualOdometry::checkKeyFrame()
 }
 void VisualOdometry::addKeyFrame()
 {
-  cout<<"add key frame"<<endl;
-  map_->insertKeyFrame(curr_);
+	if(map_->keyframes_.empty()){
+		for(size_t i=0;i<keypoints_curr_.size();i++){
+			double d=curr_->findDepth(keypoints_curr_[i]);
+			if(d<0){
+				continue;
+			}
+			Vector3d p_world =ref_->camera_->pixel2world(
+				Vector2d(keypoints_curr_[i].pt.x,keypoints_curr_[i].pt.y),
+				curr_->T_c_w_,d
+			);
+			Vector3d n=p_world-ref_->getCamCenter();
+			n.normalize();
+			MapPoint::Ptr map_point=MapPoint::createMapPoint(
+			p_world,n,descriptors_curr_.row(i).clone(),curr_.get()
+			);
+			map_->insertMapPoint(map_point);
+		}
+	}
+	map_->insertKeyFrame(curr_);
+	ref_=curr_;
 }
 
 
