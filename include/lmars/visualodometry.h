@@ -39,6 +39,8 @@ namespace lmars{
     double key_frame_min_rot;
     double key_frame_min_trans;
     
+    double map_point_erase_ratio_;
+    
   public:
     VisualOdometry();
     ~VisualOdometry();

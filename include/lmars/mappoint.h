@@ -8,14 +8,14 @@ namespace lmars{
   public:
     typedef shared_ptr<MapPoint> Ptr;
     unsigned long id_;
-	static unsigned long factory_id_;
-	bool good_;
+    static unsigned long factory_id_;
+    bool good_;
     Vector3d pos_;
     Vector3d norm_;
     Mat descriptor_;
-    int observe_times_;
-    int correct_times_;
-	List<Frame*> observed_frames;
+    int visible_times_;
+    int matched_times_;
+    list<Frame*> observed_frames_;
 	
     MapPoint();
     MapPoint(

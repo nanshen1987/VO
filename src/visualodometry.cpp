@@ -13,6 +13,7 @@ VisualOdometry::VisualOdometry()
     min_inliers_        = Config::get<int> ( "min_inliers" );
     key_frame_min_rot   = Config::get<double> ( "keyframe_rotation" ); 
     key_frame_min_trans = Config::get<double> ( "keyframe_translation" );
+    map_point_erase_ratio_ = Config::get<double> ( "map_point_erase_ratio" );
     orb_ = cv::ORB::create ( num_of_features_, scale_factor_, level_pyramid_ );
 
 }
@@ -141,13 +142,13 @@ void VisualOdometry::optimizeMap()
 {
 	for(auto iter=map_->map_points_.begin();iter!=map_->map_points_.end();)
 	{
-		if(!curr_->isInFrame(iter->second->pos_)
+		if(!curr_->isInFrame(iter->second->pos_))
 		{
 			iter=map_->map_points_.erase(iter);
 			continue;
 		}
 		
-		float match_ratio=float(iter->second->match_times)/iter->second->visible_times_;
+		float match_ratio=float(iter->second->matched_times_)/iter->second->visible_times_;
 		if(match_ratio<map_point_erase_ratio_)
 		{
 			iter=map_->map_points_.erase(iter);
@@ -192,14 +193,14 @@ bool VisualOdometry::checkKeyFrame()
 }
 void VisualOdometry::addKeyFrame()
 {
-	if(map_->keyframes_.empty()){
-		for(size_t i=0;i<keypoints_curr_.size();i++){
-			double d=curr_->findDepth(keypoints_curr_[i]);
+	if(map_->key_frames_.empty()){
+		for(size_t i=0;i<Keypoints_curr_.size();i++){
+			double d=curr_->findDepth(Keypoints_curr_[i]);
 			if(d<0){
 				continue;
 			}
 			Vector3d p_world =ref_->camera_->pixel2world(
-				Vector2d(keypoints_curr_[i].pt.x,keypoints_curr_[i].pt.y),
+				Vector2d(Keypoints_curr_[i].pt.x,Keypoints_curr_[i].pt.y),
 				curr_->T_c_w_,d
 			);
 			Vector3d n=p_world-ref_->getCamCenter();

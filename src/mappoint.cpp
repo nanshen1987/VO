@@ -20,7 +20,7 @@ const Vector3d& norm,
 const Mat& descriptor,
 Frame* frame){
 	return MapPoint::Ptr(
-	new MapPoint(factory_id_++,pos_world,norm,frame,descriptor);
+	new MapPoint(factory_id_++,pos_world,norm,frame,descriptor)
 	);
 }
 
