@@ -23,7 +23,11 @@ namespace lmars{
     Mat descriptors_curr_;
     Mat descriptors_ref_;
     
-    vector<cv::DMatch> feature_matches_;
+    //vector<cv::DMatch> feature_matches_;
+    
+    cv::FlannBasedMatcher   matcher_flann_;     // flann matcher
+    vector<int> match_2dkp_index_;
+    vector<MapPoint::Ptr> match_3dpts_;
     SE3 T_c_r_estimated_;
     int num_inliners_;
     int num_lost_;
@@ -51,11 +55,14 @@ namespace lmars{
     void computeDescriptors();
     void featureMatching();
     void poseEstimationPnp();
-	void optimizeMap();
+    void addMapPoints();
+    void optimizeMap();
     void setRef3DPoints();
     void addKeyFrame();
     bool checkEstimatedPose();
     bool checkKeyFrame();
+    
+    double getViewAngle(Frame::Ptr frame,MapPoint::Ptr point);
     
     
   };

@@ -1,6 +1,7 @@
 #include "lmars/visualodometry.h"
 #include"lmars/config.h"
 #include<opencv2/calib3d/calib3d.hpp>
+#include <boost/timer.hpp>
 namespace lmars {
 VisualOdometry::VisualOdometry()
 :state_(INITIALIZING),ref_(nullptr),curr_(nullptr),map_(new Map),num_lost_(0),num_inliners_(0)
@@ -80,9 +81,22 @@ void VisualOdometry::computeDescriptors()
 }
 void VisualOdometry::featureMatching()
 {
+  
+  boost::timer timer;
   vector<cv::DMatch> matches;
-  cv::BFMatcher matcher(cv::NORM_HAMMING);
-  matcher.match(descriptors_ref_,descriptors_curr_,matches);
+  Mat desp_map;
+  vector<MapPoint::Ptr> candidate;
+  for(auto& allpoints:map_->map_points_){
+    MapPoint::Ptr& p=allpoints.second;
+    if(curr_->isInFrame(p->pos_)){
+      p->visible_times_++;
+      candidate.push_back(p);
+      desp_map.push_back(p->descriptor_);
+    }
+  }
+  
+  matcher_flann_.match(desp_map,descriptors_curr_,matches);
+
   float min_dis=std::min_element(
     matches.begin(),matches.end(),
     [](const cv::DMatch& m1,const cv::DMatch& m2)
@@ -91,13 +105,17 @@ void VisualOdometry::featureMatching()
     }
     )->distance;
 
-  feature_matches_.clear();
-  for(cv::DMatch& match:matches){
-    if(match.distance<std::max<float>(min_dis*match_ratio_,30.0)){
-	feature_matches_.push_back(match);
+  match_3dpts_.clear();
+  match_2dkp_index_.clear();
+  
+  for(cv::DMatch& m:matches){
+    if(m.distance<std::max<float>(min_dis*match_ratio_,30.0)){
+	match_3dpts_.push_back(candidate[m.queryIdx]);
+	match_2dkp_index_.push_back(m.trainIdx);
     }
   }
-  cout<<"good matches: "<<feature_matches_.size()<<endl;
+  cout<<"good matches: "<<match_3dpts_.size()<<endl;
+  cout<<"time eclipsed:"<<timer.elapsed()<<endl;
 }
 
 void VisualOdometry::setRef3DPoints()
@@ -118,10 +136,14 @@ void VisualOdometry::poseEstimationPnp()
 {
   vector<cv::Point3f> pts3d;
   vector<cv::Point2f> pts2d;
-  for(cv::DMatch m:feature_matches_){
-    pts2d.push_back(Keypoints_curr_[m.trainIdx].pt);
-    pts3d.push_back(pts_3d_ref_[m.queryIdx]);
-  }
+    for ( int index:match_2dkp_index_ )
+    {
+        pts2d.push_back ( Keypoints_curr_[index].pt );
+    }
+    for ( MapPoint::Ptr pt:match_3dpts_ )
+    {
+        pts3d.push_back( pt->getPositionCV() );
+    }
   Mat K=(cv::Mat_<double>(3,3)<<
     ref_->camera_->fx_,0,ref_->camera_->cx_,
     0,ref_->camera_->fy_,ref_->camera_->cy_,
@@ -161,11 +183,20 @@ void VisualOdometry::optimizeMap()
 			continue;
 		}
 		if ( iter->second->good_ == false )
-        {
-            // TODO try triangulate this map point 
-        }
-        iter++;
+		{
+		    // TODO try triangulate this map point 
+		}
+		iter++;
 	}
+	if(match_2dkp_index_.size()<100){
+	  addMapPoints();
+	}
+	if(map_->map_points_.size()>1000){
+	  map_point_erase_ratio_+=0.05;
+	}else{
+	  map_point_erase_ratio_=0.1;
+	}
+	cout<<"local map size:"<<map_->map_points_.size()<<endl;
 }
 bool VisualOdometry::checkEstimatedPose()
 {
@@ -215,10 +246,17 @@ void VisualOdometry::addKeyFrame()
 	ref_=curr_;
 }
 
+double VisualOdometry::getViewAngle(Frame::Ptr frame, MapPoint::Ptr point)
+{
+    Vector3d n=point->pos_-frame->getCamCenter();
+    n.normalize();
+    return acos(n.transpose()*point->norm_);
+}
 
-
-
-
+void VisualOdometry::addMapPoints()
+{
+    //TODO
+}
 
 
 }
