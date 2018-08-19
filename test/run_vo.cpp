@@ -52,12 +52,13 @@ int main(int argc,char ** argv)
       if(color.data==nullptr||depth.data==nullptr){
 	break;
       }
+     
       lmars::Frame::Ptr pFrame=lmars::Frame::createFrame();
       pFrame->camera_=camera;
       pFrame->color_=color;
       pFrame->depth_=depth;
       pFrame->time_stamp_=rgb_times[i];
-      
+       
       boost::timer timer;
       vo->addFrame(pFrame);
       cout<<"VO costs time:"<<timer.elapsed()<<endl;

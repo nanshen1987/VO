@@ -4,7 +4,8 @@
 #include <boost/timer.hpp>
 namespace lmars {
 VisualOdometry::VisualOdometry()
-:state_(INITIALIZING),ref_(nullptr),curr_(nullptr),map_(new Map),num_lost_(0),num_inliners_(0)
+:state_(INITIALIZING),ref_(nullptr),curr_(nullptr),map_(new Map),num_lost_(0),num_inliners_(0), matcher_flann_ ( cv::Ptr<cv::flann::IndexParams> (new cv::flann::LshIndexParams ( 5,10,2 )) )
+
 {
     num_of_features_    = Config::get<int> ( "number_of_features" );
     scale_factor_       = Config::get<double> ( "scale_factor" );
@@ -29,19 +30,20 @@ bool VisualOdometry::addFrame(Frame::Ptr frame)
     {
       state_=OK;
       curr_=ref_=frame;
-      map_->insertKeyFrame(frame);
       extractKeyPoints();
       computeDescriptors();
-      setRef3DPoints();
+      addKeyFrame();
       break;
     }
     case OK:
     {
+      
       curr_=frame;
       extractKeyPoints();
       computeDescriptors();
       featureMatching();
       poseEstimationPnp();
+     
       if(checkEstimatedPose()==true)
       {
 	curr_->T_c_w_=T_c_r_estimated_*ref_->T_c_w_;
@@ -94,7 +96,7 @@ void VisualOdometry::featureMatching()
       desp_map.push_back(p->descriptor_);
     }
   }
-  
+
   matcher_flann_.match(desp_map,descriptors_curr_,matches);
 
   float min_dis=std::min_element(
@@ -107,6 +109,8 @@ void VisualOdometry::featureMatching()
 
   match_3dpts_.clear();
   match_2dkp_index_.clear();
+  
+
   
   for(cv::DMatch& m:matches){
     if(m.distance<std::max<float>(min_dis*match_ratio_,30.0)){
@@ -255,7 +259,29 @@ double VisualOdometry::getViewAngle(Frame::Ptr frame, MapPoint::Ptr point)
 
 void VisualOdometry::addMapPoints()
 {
-    //TODO
+    vector<bool> matched(Keypoints_curr_.size(),false);
+    for(int index:match_2dkp_index_){
+      matched[index]=true;
+    }
+    for(int i=0;i<Keypoints_curr_.size();i++){
+      if(matched[i]){
+	continue;
+      }
+      double d=ref_->findDepth(Keypoints_curr_[i]);
+      if(d<0){
+	continue;
+      }
+      Vector3d p_world= ref_->camera_->pixel2world(
+	Vector2d(Keypoints_curr_[i].pt.x,Keypoints_curr_[i].pt.y),
+	curr_->T_c_w_,d
+      );
+      Vector3d n=p_world-ref_->getCamCenter();
+      n.normalize();
+      MapPoint::Ptr map_point= MapPoint::createMapPoint(
+	p_world,n,descriptors_curr_.row(i).clone(),curr_.get()
+      );
+      map_->insertMapPoint(map_point);
+    }
 }
 
 
